@@ -18,6 +18,9 @@ public class Vabidu {
         
         Sesion sesion = new Sesion();
         sesion.setVisible(true);
+//        
+//        Padre padre = new Padre();
+//        padre.setVisible(true);
         
     }
     
