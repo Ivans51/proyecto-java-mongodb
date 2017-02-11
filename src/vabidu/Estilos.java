@@ -9,16 +9,6 @@ package vabidu;
  *
  * @author Ivans
  */
-public class Vabidu {
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        
-        Sesion sesion = new Sesion();
-        sesion.setVisible(true);
-        
-    }
+public class Estilos {
     
 }
