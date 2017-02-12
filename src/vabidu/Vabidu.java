@@ -16,11 +16,11 @@ public class Vabidu {
      */
     public static void main(String[] args) {
         
-        Sesion sesion = new Sesion();
-        sesion.setVisible(true);
-//        
-//        Padre padre = new Padre();
-//        padre.setVisible(true);
+//        Sesion sesion = new Sesion();
+//        sesion.setVisible(true);
+        
+        Padre padre = new Padre();
+        padre.setVisible(true);
         
     }
     
