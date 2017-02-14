@@ -8,17 +8,50 @@ package vabidu;
 import java.awt.Color;
 import javax.swing.plaf.basic.BasicInternalFrameUI;
 
+//Libreras de mongo
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import org.bson.types.ObjectId;
+
 /**
  *
  * @author Ivans
  */
 public class Ventas extends javax.swing.JInternalFrame {
+    
+    MongoClient mongoClient;
+    DBCollection clientes;
+    BasicDBObject cliente;
+    String nombre, cedula, direccion, telefono;
+    DefaultTableModel tabla;
+    DBCursor cur;
+    String col[] = {"Id", "Nombre", "Cedula", "Dirección", "Telefono"};
 
     /**
      * Creates new form Ventas
      */
     public Ventas() {
+        
+        mongoClient = new MongoClient("localhost", 27017);
+        DB db = mongoClient.getDB("vabi");
+        clientes = db.getCollection("clientes");
+        clientes.createIndex(new BasicDBObject("cedula", 1), new BasicDBObject("unique", true));
+        
         initComponents();
+        tabla = new DefaultTableModel(col, 0) {
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return false;
+            }
+        };
+        refrescar();
+        
         jPanel1.setBackground(Color.DARK_GRAY);
         jPanel3.setBackground(Color.WHITE);
         jPanel4.setBackground(Color.WHITE);
@@ -236,9 +269,9 @@ public class Ventas extends javax.swing.JInternalFrame {
         });
 
         jLabel6.setFont(new java.awt.Font("Microsoft Sans Serif", 0, 14)); // NOI18N
-        jLabel6.setText("Detalles del pago");
+        jLabel6.setText("Forma de Pago");
 
-        jComboBox3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "_id", "nombre", "apellido", "nombre comercial", "direccion", "telefono" }));
+        jComboBox3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Debito", "Credito", "Efectivo" }));
 
         jLabel7.setFont(new java.awt.Font("Microsoft Sans Serif", 0, 14)); // NOI18N
         jLabel7.setText("IVA");
@@ -404,7 +437,7 @@ public class Ventas extends javax.swing.JInternalFrame {
                                 .addComponent(jTextField9, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 524, Short.MAX_VALUE))
                 .addContainerGap())
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
@@ -473,7 +506,7 @@ public class Ventas extends javax.swing.JInternalFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        //        buscar();
+        buscar();
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -484,9 +517,9 @@ public class Ventas extends javax.swing.JInternalFrame {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        //        asignar();
-        //        eliminar();
-        //        refrescar();
+        asignar();
+        eliminar();
+        refrescar();
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
@@ -509,9 +542,91 @@ public class Ventas extends javax.swing.JInternalFrame {
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
         // TODO add your handling code here:
+        asignar();
+        crear();
+        refrescar();
     }//GEN-LAST:event_jButton8ActionPerformed
 
+    public void buscar() {
+        int a = tabla.getRowCount() - 1;
+        for (int i = a; i >= 0; i--) {
+            tabla.removeRow(i);
+        }
+//        String opcion = (String) jComboBox1.getSelectedItem();
+        String valor = jTextField6.getText();
+        cliente = new BasicDBObject();
+        if (valor.equals("cedula")) {
+            cliente.put(valor, new ObjectId(valor));
+        } else {
+            cliente.put(valor, valor);
+        }
+        cur = clientes.find(cliente);
+        while (cur.hasNext()) {
+            DBObject obj = cur.next();
+            Object[] fila = {
+                obj.get("_id"),
+                obj.get("nombre"),
+                obj.get("cedula"),
+                obj.get("direccion"),
+                obj.get("telefono")
+            };
+            tabla.addRow(fila);
+        }
+        jTable1.setModel(tabla);
+        cur.close();
+    }
+    
+    public final void refrescar() {
+        int a = tabla.getRowCount() - 1;
+        for (int i = a; i >= 0; i--) {
+            tabla.removeRow(i);
+        }
+        cur = clientes.find();
+        while (cur.hasNext()) {
+            DBObject obj = cur.next();
+            Object[] fila = {
+                obj.get("_id"),
+                obj.get("nombre"),
+                obj.get("cedula"),
+                obj.get("direccion"),
+                obj.get("telefono")
+            };
+            tabla.addRow(fila);
+        }
+        jTable1.setModel(tabla);
+        cur.close();
+    }
+    public void asignar() {
+        nombre = jTextField10.getText();
+        cedula = jTextField6.getText();
+        direccion = jTextField12.getText();
+        telefono = jTextField13.getText();
+    }
 
+    public void crear() {
+        try {
+            cliente = new BasicDBObject();
+            cliente.put("nombre", nombre);
+            cliente.put("cedula", cedula);
+            cliente.put("direccion", direccion);
+            cliente.put("telefono", telefono);
+            clientes.insert(cliente);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "La cedula ya existe");
+        }
+    }
+
+    public void eliminar() {
+        try {
+            int index = jTable1.getSelectedRow();
+            String valor = jTable1.getValueAt(index, 0).toString();
+            cliente = new BasicDBObject("_id", new ObjectId(valor));
+            clientes.remove(cliente);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "No has seleccionado una fila");
+        }
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
